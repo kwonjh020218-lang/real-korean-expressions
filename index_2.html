@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>진짜 한국어 - Real Korean Expressions</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🗂️</text></svg>" />
+<style>
+  :root {
+    --bg: #F3F1FA;
+    --ink: #241C33;
+    --ink-soft: #5b5470;
+    --card: #FFFFFF;
+    --primary: #7C4DFF;
+    --primary-dark: #5E35D8;
+    --slang: #FF6B6B;
+    --reaction: #2E9BFF;
+    --abbr: #17B893;
+    --idiom: #FF9F1C;
+    --line: #E3DEF5;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, "Apple SD Gothic Neo", "Pretendard", "Malgun Gothic", sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1.5rem 1rem 3rem;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 1.2rem;
+  }
+  header h1 {
+    font-size: 1.4rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+  header h1 .stick {
+    display: inline-block;
+    transform: rotate(-6deg);
+  }
+  header p {
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+    margin-top: 0.25rem;
+  }
+
+  #catalog-tabs {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 1.1rem;
+    max-width: 420px;
+  }
+  .tab-btn {
+    border: 1.5px solid var(--line);
+    background: var(--card);
+    color: var(--ink-soft);
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.35rem 0.7rem;
+    border-radius: 999px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s ease;
+  }
+  .tab-btn[data-cat="all"].active { background: var(--ink); border-color: var(--ink); color: #fff; }
+  .tab-btn[data-cat="slang"].active { background: var(--slang); border-color: var(--slang); color: #fff; }
+  .tab-btn[data-cat="reaction"].active { background: var(--reaction); border-color: var(--reaction); color: #fff; }
+  .tab-btn[data-cat="abbr"].active { background: var(--abbr); border-color: var(--abbr); color: #fff; }
+  .tab-btn[data-cat="idiom"].active { background: var(--idiom); border-color: var(--idiom); color: #fff; }
+
+  #deck-counter {
+    font-size: 0.75rem;
+    color: var(--ink-soft);
+    font-weight: 600;
+    margin-bottom: 0.6rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  #card-stage {
+    width: 100%;
+    max-width: 380px;
+    perspective: 1400px;
+  }
+
+  #flashcard {
+    position: relative;
+    width: 100%;
+    height: 300px;
+    cursor: pointer;
+    transform-style: preserve-3d;
+    transition: transform 0.5s cubic-bezier(0.4, 0.2, 0.2, 1);
+  }
+  #flashcard.flipped { transform: rotateY(180deg); }
+
+  .face {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    border-radius: 20px;
+    background: var(--card);
+    box-shadow: 0 10px 30px rgba(36, 28, 51, 0.14), 0 2px 6px rgba(36,28,51,0.06);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .face-back { transform: rotateY(180deg); }
+
+  .cat-tab {
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #fff;
+    padding: 0.35rem 0.9rem;
+    align-self: flex-start;
+    border-bottom-right-radius: 12px;
+  }
+  .cat-tab.slang { background: var(--slang); }
+  .cat-tab.reaction { background: var(--reaction); }
+  .cat-tab.abbr { background: var(--abbr); }
+  .cat-tab.idiom { background: var(--idiom); }
+
+  .face-front {
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 1.5rem;
+  }
+  .kr-word {
+    font-size: 2.1rem;
+    font-weight: 800;
+    line-height: 1.25;
+    word-break: keep-all;
+  }
+  .romanization {
+    margin-top: 0.6rem;
+    font-family: "SF Mono", "Courier New", monospace;
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    letter-spacing: 0.02em;
+  }
+  .flip-hint {
+    position: absolute;
+    bottom: 14px;
+    font-size: 0.68rem;
+    color: var(--ink-soft);
+    opacity: 0.7;
+  }
+
+  .speak-btn {
+    margin-top: 0.5rem;
+    border: 1.5px solid var(--line);
+    background: #fff;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.12s ease, background 0.15s ease;
+  }
+  .speak-btn:hover { background: #F6F3FF; }
+  .speak-btn:active { transform: scale(0.92); }
+  .speak-btn.speaking { background: var(--primary); border-color: var(--primary); }
+  .speak-btn.small {
+    margin-top: 0;
+    width: 28px;
+    height: 28px;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+  }
+
+  .face-back {
+    padding: 1.1rem 1.3rem 1.3rem;
+    justify-content: flex-start;
+    gap: 0.55rem;
+    overflow-y: auto;
+  }
+  .back-section-label {
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--primary);
+    margin-top: 0.3rem;
+  }
+  .back-meaning-ko { font-size: 0.92rem; font-weight: 600; line-height: 1.4; }
+  .back-meaning-en { font-size: 0.82rem; color: var(--ink-soft); line-height: 1.4; }
+  .back-example {
+    background: #F6F3FF;
+    border-radius: 10px;
+    padding: 0.6rem 0.7rem;
+    font-size: 0.8rem;
+    line-height: 1.45;
+  }
+  .back-example .ex-en { color: var(--ink-soft); margin-top: 0.2rem; }
+
+  #nav-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.8rem;
+    margin-top: 1.2rem;
+    width: 100%;
+    max-width: 380px;
+  }
+  .nav-btn {
+    border: none;
+    background: var(--card);
+    color: var(--ink);
+    font-size: 1.1rem;
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 3px 10px rgba(36,28,51,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.12s ease;
+  }
+  .nav-btn:hover { transform: scale(1.08); }
+  .nav-btn:active { transform: scale(0.94); }
+  #shuffle-btn { font-size: 1rem; }
+
+  #rate-row {
+    display: flex;
+    gap: 0.6rem;
+    margin-top: 0.9rem;
+    width: 100%;
+    max-width: 380px;
+  }
+  .rate-btn {
+    flex: 1;
+    border: none;
+    border-radius: 12px;
+    padding: 0.65rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  #know-btn { background: var(--abbr); color: #fff; }
+  #learning-btn { background: #fff; color: var(--ink-soft); border: 1.5px solid var(--line) !important; }
+
+  #progress-note {
+    margin-top: 1rem;
+    font-size: 0.72rem;
+    color: var(--ink-soft);
+    text-align: center;
+    max-width: 340px;
+    line-height: 1.5;
+  }
+
+  @media (max-width: 420px) {
+    #flashcard { height: 320px; }
+    .kr-word { font-size: 1.8rem; }
+  }
+</style>
+</head>
+<body>
+
+  <header>
+    <h1><span class="stick">🥢</span> 진짜 한국어 <span class="stick">🥢</span></h1>
+    <p>사전에 안 나오는 진짜 실생활 표현 · Real Korean, not the textbook kind</p>
+  </header>
+
+  <div id="catalog-tabs">
+    <button class="tab-btn active" data-cat="all" type="button">전체 All</button>
+    <button class="tab-btn" data-cat="slang" type="button">신조어 Slang</button>
+    <button class="tab-btn" data-cat="reaction" type="button">리액션 Reactions</button>
+    <button class="tab-btn" data-cat="abbr" type="button">줄임말 Abbr.</button>
+    <button class="tab-btn" data-cat="idiom" type="button">관용구 Idioms</button>
+  </div>
+
+  <div id="deck-counter">1 / 60</div>
+
+  <div id="card-stage">
+    <div id="flashcard">
+      <div class="face face-front">
+        <div class="cat-tab" id="cat-tab-front"></div>
+        <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+          <div class="kr-word" id="kr-word"></div>
+          <button class="speak-btn" id="speak-word-btn" type="button" aria-label="발음 듣기">🔊</button>
+          <div class="romanization" id="romanization"></div>
+        </div>
+        <div class="flip-hint">탭해서 뜻 보기 · tap to flip</div>
+      </div>
+      <div class="face face-back">
+        <div class="cat-tab" id="cat-tab-back"></div>
+        <div class="back-section-label">뜻 · Meaning</div>
+        <div class="back-meaning-ko" id="meaning-ko"></div>
+        <div class="back-meaning-en" id="meaning-en"></div>
+        <div class="back-section-label">예문 · Example</div>
+        <div class="back-example">
+          <div style="display:flex; align-items:center; gap:6px;">
+            <div id="example-kr" style="flex:1;"></div>
+            <button class="speak-btn small" id="speak-example-btn" type="button" aria-label="예문 발음 듣기">🔊</button>
+          </div>
+          <div class="ex-en" id="example-en"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="nav-row">
+    <button class="nav-btn" id="prev-btn" type="button" aria-label="이전 카드">◀</button>
+    <button class="nav-btn" id="shuffle-btn" type="button" aria-label="섞기">🔀</button>
+    <button class="nav-btn" id="next-btn" type="button" aria-label="다음 카드">▶</button>
+  </div>
+
+  <div id="rate-row">
+    <button class="rate-btn" id="learning-btn" type="button">🤔 아직 헷갈려요</button>
+    <button class="rate-btn" id="know-btn" type="button">✅ 알아요</button>
+  </div>
+
+  <div id="progress-note"></div>
+
+<script>
+const EXPRESSIONS = [{"kr": "킹받다", "romanization": "kingbatda", "meaningKo": "너무 화가 나거나 짜증날 때 쓰는 말", "meaningEn": "So annoying/infuriating (intensified '화나다')", "exampleKr": "약속 시간에 30분 늦었는데 미안하다는 말도 안 해서 킹받았어.", "exampleEn": "They were 30 min late and didn't even apologize, so annoying.", "category": "slang", "id": 1}, {"kr": "찐이다", "romanization": "jjinida", "meaningKo": "진짜(진짜의 줄임)라는 뜻, 진심임을 강조", "meaningEn": "It's real / genuine (from '진짜')", "exampleKr": "이 라멘집 찐이다, 진짜 맛있어.", "exampleEn": "This ramen place is the real deal, seriously good.", "category": "slang", "id": 2}, {"kr": "개이득", "romanization": "gae-ideuk", "meaningKo": "엄청난 이득이나 횡재를 봤을 때 쓰는 말", "meaningEn": "Huge win / jackpot / total win", "exampleKr": "1+1 세일이라 하나 사러 갔다가 두 개 받았어, 개이득!", "exampleEn": "It was buy-one-get-one, total win!", "category": "slang", "id": 3}, {"kr": "어그로", "romanization": "eogeuro", "meaningKo": "일부러 관심이나 화를 끌기 위한 도발적인 행동/말", "meaningEn": "Deliberately provocative behavior to get attention/reaction", "exampleKr": "저 사람 댓글 어그로 끄는 거니까 무시해.", "exampleEn": "That person's comment is just baiting for attention, ignore it.", "category": "slang", "id": 4}, {"kr": "최애", "romanization": "choe-ae", "meaningKo": "가장 좋아하는 사람/캐릭터 (최고 애정)", "meaningEn": "Favorite (person, character, idol)", "exampleKr": "내 최애는 데뷔 때부터 좋아했어.", "exampleEn": "I've loved my favorite (idol) since their debut.", "category": "slang", "id": 5}, {"kr": "갑분싸", "romanization": "gapbunssa", "meaningKo": "갑자기 분위기가 싸해짐(어색해짐)의 줄임말", "meaningEn": "Sudden awkward silence (mood suddenly turns cold)", "exampleKr": "그 농담 하고 나서 갑분싸됐어.", "exampleEn": "After that joke, the mood suddenly got awkward.", "category": "slang", "id": 6}, {"kr": "존버", "romanization": "jonbeo", "meaningKo": "힘들어도 끝까지 버틴다는 뜻(비속어 기반, 친한 사이에서만)", "meaningEn": "Grit your teeth and endure/hold out (informal, use with close friends only)", "exampleKr": "취업 안 돼도 존버하면 언젠가 되겠지.", "exampleEn": "Even if I'm not getting hired, I'll just keep grinding it out.", "category": "slang", "id": 7}, {"kr": "케바케", "romanization": "kebake", "meaningKo": "케이스 바이 케이스(경우에 따라 다르다)의 줄임말", "meaningEn": "Case by case (it depends)", "exampleKr": "그건 케바케야, 상황마다 달라.", "exampleEn": "That's case by case, it depends on the situation.", "category": "slang", "id": 8}, {"kr": "답정너", "romanization": "dapjeongneo", "meaningKo": "'답은 정해져 있고 너는 대답만 하면 돼'의 줄임말, 원하는 답을 정해놓고 묻는 사람", "meaningEn": "Someone who already has the answer they want and is just fishing for it", "exampleKr": "물어봐 놓고 답정너 하지 마.", "exampleEn": "Don't ask my opinion and then act like there's only one right answer.", "category": "slang", "id": 9}, {"kr": "얼죽아", "romanization": "eoljuk-a", "meaningKo": "'얼어 죽어도 아이스'의 줄임말, 추워도 아이스 음료만 마시는 사람", "meaningEn": "'I'd rather freeze to death than drink hot' - someone who always drinks iced drinks even in winter", "exampleKr": "나 완전 얼죽아라 겨울에도 아이스 아메리카노만 마셔.", "exampleEn": "I'm the type who drinks iced coffee even in winter, no matter how cold.", "category": "slang", "id": 10}, {"kr": "자만추", "romanization": "jamanchu", "meaningKo": "'자연스러운 만남 추구'의 줄임말, 소개팅보다 자연스럽게 만나는 걸 선호함", "meaningEn": "Preferring to meet someone naturally rather than through a blind date/setup", "exampleKr": "나는 자만추라서 소개팅은 잘 안 해.", "exampleEn": "I prefer meeting people naturally, so I don't really do blind dates.", "category": "slang", "id": 11}, {"kr": "스불재", "romanization": "seubulje", "meaningKo": "'스스로 불러온 재앙'의 줄임말, 자기가 자초한 문제", "meaningEn": "'A disaster you brought upon yourself' - a self-inflicted problem", "exampleKr": "숙제 미루다가 밤새운 거 완전 스불재지.", "exampleEn": "Staying up all night because I procrastinated on homework - totally my own fault.", "category": "slang", "id": 12}, {"kr": "정줄놓", "romanization": "jeongjulnot", "meaningKo": "'정신줄을 놓다'의 줄임말, 정신이 하나도 없다는 뜻", "meaningEn": "Losing your grip / totally spacing out / mind blanking", "exampleKr": "시험 기간에 잠을 못 자서 정줄놓 상태야.", "exampleEn": "I haven't slept during exam period, I'm completely out of it.", "category": "slang", "id": 13}, {"kr": "알잘딱깔센", "romanization": "aljjaldakkkalsen", "meaningKo": "'알아서 잘 딱 깔끔하고 센스있게'의 줄임말, 눈치껏 센스있게 처리하라는 뜻", "meaningEn": "'Handle it well on your own, cleanly and with good sense' - do it smartly without needing detailed instructions", "exampleKr": "다른 설명 필요 없이 알잘딱깔센으로 해줘.", "exampleEn": "No need for detailed instructions, just handle it smartly.", "category": "slang", "id": 14}, {"kr": "무야호", "romanization": "muyaho", "meaningKo": "너무 좋아서 흥분했을 때 내는 감탄사(밈에서 유래)", "meaningEn": "An exclamation of excitement/joy (from a viral meme)", "exampleKr": "여행 당첨됐다는 소식 듣고 무야호를 외쳤어.", "exampleEn": "When I heard I won the trip, I shouted with joy.", "category": "slang", "id": 15}, {"kr": "오운완", "romanization": "o-un-wan", "meaningKo": "'오늘 운동 완료'의 줄임말", "meaningEn": "'Today's workout complete' - used when posting workout completion", "exampleKr": "오운완! 오늘도 헬스장 다녀왔어.", "exampleEn": "Workout done for today! Went to the gym again.", "category": "slang", "id": 16}, {"kr": "만렙", "romanization": "manlep", "meaningKo": "게임 용어에서 온 말로, 어떤 분야에서 최고 수준/실력자라는 뜻", "meaningEn": "From gaming (max level) - someone who's the absolute best/expert at something", "exampleKr": "저 사람 요리 만렙이야, 뭐든 다 맛있게 해.", "exampleEn": "That person is a max-level cook, everything they make is delicious.", "category": "slang", "id": 17}, {"kr": "복세편살", "romanization": "boksepyeonsal", "meaningKo": "'복잡한 세상 편하게 살자'의 줄임말", "meaningEn": "'Let's live comfortably in this complicated world' - a laid-back life motto", "exampleKr": "너무 스트레스받지 말고 복세편살 하자.", "exampleEn": "Don't stress too much, let's just take life easy.", "category": "slang", "id": 18}, {"kr": "갓생", "romanization": "gatsaeng", "meaningKo": "'God(신)'과 '생(삶)'의 합성어, 부지런하고 알찬 하루를 사는 삶", "meaningEn": "'God-life' - living a productive, disciplined, high-achieving lifestyle", "exampleKr": "새벽 운동하고 하루 계획 세우면서 갓생 살고 있어.", "exampleEn": "Working out early and planning my day, living that productive life.", "category": "slang", "id": 19}, {"kr": "TMI", "romanization": "티엠아이", "meaningKo": "Too Much Information의 줄임말, 굳이 안 해도 될 정보를 말할 때", "meaningEn": "'Too much information' - sharing more detail than necessary", "exampleKr": "TMI지만 나 오늘 아침에 늦잠 자서 지각했어.", "exampleEn": "TMI but I overslept and was late this morning.", "category": "slang", "id": 20}, {"kr": "낄끼빠빠", "romanization": "kkilkkippappa", "meaningKo": "'낄 데 끼고 빠질 데 빠져라'의 줄임말, 눈치껏 행동하라는 뜻", "meaningEn": "'Join in where you should, step back where you shouldn't' - read the room", "exampleKr": "그 대화는 낄끼빠빠 좀 해줘.", "exampleEn": "Please read the room and don't jump into that conversation.", "category": "slang", "id": 21}, {"kr": "헐", "romanization": "heol", "meaningKo": "놀라거나 황당할 때 내는 감탄사", "meaningEn": "An exclamation of shock/surprise (like 'whoa' or 'no way')", "exampleKr": "헐, 진짜야? 믿기지가 않아.", "exampleEn": "Whoa, seriously? I can't believe it.", "category": "reaction", "id": 22}, {"kr": "대박", "romanization": "daebak", "meaningKo": "정말 놀랍거나 대단한 것을 보고 감탄할 때 쓰는 말", "meaningEn": "'Jackpot' - used to express amazement, 'awesome' or 'no way'", "exampleKr": "이 가게 완전 대박이다, 사람이 이렇게 많다니.", "exampleEn": "This place is amazing, so many people here.", "category": "reaction", "id": 23}, {"kr": "노잼", "romanization": "nojaem", "meaningKo": "'재미없다'의 줄임말", "meaningEn": "'No fun' - boring, not funny", "exampleKr": "그 영화 완전 노잼이었어.", "exampleEn": "That movie was totally boring.", "category": "reaction", "id": 24}, {"kr": "꿀잼", "romanization": "kkuljaem", "meaningKo": "'꿀처럼 재밌다'라는 뜻, 재밌다의 강조 표현", "meaningEn": "'Honey-fun' - very fun/entertaining", "exampleKr": "이 게임 완전 꿀잼이야, 계속 하게 돼.", "exampleEn": "This game is super fun, I can't stop playing.", "category": "reaction", "id": 25}, {"kr": "헉", "romanization": "heok", "meaningKo": "놀라거나 숨이 막힐 때 내는 짧은 감탄사", "meaningEn": "A short gasp of surprise ('gasp')", "exampleKr": "헉, 지갑을 집에 두고 왔네.", "exampleEn": "Oh no, I left my wallet at home.", "category": "reaction", "id": 26}, {"kr": "아오", "romanization": "ao", "meaningKo": "답답하거나 짜증날 때 내는 감탄사", "meaningEn": "An exclamation of frustration/exasperation", "exampleKr": "아오, 버스를 놓쳤어.", "exampleEn": "Ugh, I missed the bus.", "category": "reaction", "id": 27}, {"kr": "어이없다", "romanization": "eoieopda", "meaningKo": "너무 황당하고 기가 막힐 때 쓰는 표현", "meaningEn": "'Absurd/ridiculous' - so shocking it's almost funny", "exampleKr": "약속 시간에 안 나타나고 연락도 없다니 진짜 어이없어.", "exampleEn": "They didn't show up and didn't even contact me, so ridiculous.", "category": "reaction", "id": 28}, {"kr": "소름", "romanization": "soreum", "meaningKo": "너무 놀랍거나 신기해서 몸에 전율이 느껴질 때", "meaningEn": "'Goosebumps' - something so amazing/eerie it gives you chills", "exampleKr": "이 노래 가사 완전 소름이야.", "exampleEn": "The lyrics of this song give me chills.", "category": "reaction", "id": 29}, {"kr": "어쩔티비", "romanization": "eojjeol-tibi", "meaningKo": "'어쩌라고+티비'를 붙인 장난스러운 표현, 상관없다는 뜻(장난스럽게)", "meaningEn": "A playful, slightly teasing way of saying 'so what' / 'I don't care'", "exampleKr": "A: 나 오늘 지각했어. B: 어쩔티비.", "exampleEn": "A: I was late today. B: So what (jokingly).", "category": "reaction", "id": 30}, {"kr": "ㅇㅈ", "romanization": "eung-ji", "meaningKo": "'인정'의 초성 줄임, 동의한다는 뜻", "meaningEn": "Consonant shorthand for '인정' (agreed/acknowledged)", "exampleKr": "A: 이 노래 진짜 좋다. B: ㅇㅈ", "exampleEn": "A: This song is really good. B: Agreed.", "category": "abbr", "id": 31}, {"kr": "ㄹㅇ", "romanization": "reol", "meaningKo": "'real(진짜)'의 초성 줄임", "meaningEn": "Consonant shorthand for 'real' (seriously/for real)", "exampleKr": "이거 ㄹㅇ 맛있다.", "exampleEn": "This is seriously delicious.", "category": "abbr", "id": 32}, {"kr": "ㄱㄱ", "romanization": "geun-geu", "meaningKo": "'고고(go go)'의 초성 줄임, 하자/가자는 뜻", "meaningEn": "Consonant shorthand for 'go go' (let's do it / let's go)", "exampleKr": "A: 영화 보러 갈까? B: ㄱㄱ", "exampleEn": "A: Wanna go watch a movie? B: Let's go.", "category": "abbr", "id": 33}, {"kr": "ㅇㅋ", "romanization": "okei", "meaningKo": "'오케이(OK)'의 초성 줄임", "meaningEn": "Consonant shorthand for 'OK'", "exampleKr": "A: 7시에 만나자. B: ㅇㅋ", "exampleEn": "A: Let's meet at 7. B: OK.", "category": "abbr", "id": 34}, {"kr": "존맛", "romanization": "jonmat", "meaningKo": "'매우 맛있다'는 뜻의 강조 표현(비속어 기반, 친한 사이에서)", "meaningEn": "Very delicious (informal intensifier, use with close friends)", "exampleKr": "이 떡볶이 완전 존맛이야.", "exampleEn": "This tteokbokki is really really good.", "category": "abbr", "id": 35}, {"kr": "얼추", "romanization": "eolchu", "meaningKo": "대충, 거의 비슷하게라는 뜻(줄임말은 아니지만 일상에서 자주 씀)", "meaningEn": "Roughly / about / more or less", "exampleKr": "일 얼추 다 끝났어.", "exampleEn": "The work is roughly all done.", "category": "abbr", "id": 36}, {"kr": "총총", "romanization": "chongchong", "meaningKo": "인사말처럼 대화를 마무리할 때 귀엽게 쓰는 말(급히 간다는 느낌)", "meaningEn": "A cute sign-off meaning 'gotta run' / 'bye for now'", "exampleKr": "나 이제 가야 돼, 총총!", "exampleEn": "I gotta go now, bye!", "category": "abbr", "id": 37}, {"kr": "스밍", "romanization": "seuming", "meaningKo": "'스트리밍'의 줄임말, 주로 음악 스트리밍을 돌린다는 뜻", "meaningEn": "Short for 'streaming' - usually refers to streaming music (e.g. for chart rankings)", "exampleKr": "오늘 신곡 스밍하러 가야지.", "exampleEn": "I need to go stream the new song today.", "category": "abbr", "id": 38}, {"kr": "반모", "romanization": "banmo", "meaningKo": "'반말 모드'의 줄임말, 편하게 말 놓자는 뜻", "meaningEn": "'Casual speech mode' - suggesting to drop formal speech and talk casually", "exampleKr": "우리 반모 할까? 편하게 얘기하자.", "exampleEn": "Should we drop the formalities? Let's talk casually.", "category": "abbr", "id": 39}, {"kr": "문상", "romanization": "munsang", "meaningKo": "'문화상품권'의 줄임말", "meaningEn": "Short for 'culture gift card' (a common gift card in Korea)", "exampleKr": "생일 선물로 문상 받았어.", "exampleEn": "I got a culture gift card for my birthday.", "category": "abbr", "id": 40}, {"kr": "눈치 보다", "romanization": "nunchi boda", "meaningKo": "다른 사람의 기분이나 반응을 살피며 조심스럽게 행동하다", "meaningEn": "To read the room / gauge others' feelings and act cautiously", "exampleKr": "회의 끝나고 다들 눈치 보면서 아무 말도 안 했어.", "exampleEn": "After the meeting, everyone was reading the room and stayed quiet.", "category": "idiom", "id": 41}, {"kr": "김이 새다", "romanization": "gimi saeda", "meaningKo": "재미나 흥이 갑자기 사라지다(김빠지다와 비슷)", "meaningEn": "To lose steam/excitement suddenly (lit. 'the steam escapes')", "exampleKr": "재밌었는데 갑자기 그 말 하니까 김이 샜어.", "exampleEn": "It was fun, but that comment suddenly killed the mood.", "category": "idiom", "id": 42}, {"kr": "발이 넓다", "romanization": "bari neopda", "meaningKo": "아는 사람이 많고 인맥이 넓다는 뜻", "meaningEn": "To have a wide social network / know a lot of people (lit. 'wide feet')", "exampleKr": "저 사람은 발이 넓어서 모르는 사람이 없어.", "exampleEn": "That person knows everyone, they have such a wide network.", "category": "idiom", "id": 43}, {"kr": "입이 짧다", "romanization": "ibi jjalda", "meaningKo": "먹는 양이 적거나 음식을 가려 먹는다는 뜻", "meaningEn": "To be a picky eater / have a small appetite (lit. 'short mouth')", "exampleKr": "우리 애는 입이 짧아서 밥을 잘 안 먹어.", "exampleEn": "My kid is a picky eater, doesn't eat much.", "category": "idiom", "id": 44}, {"kr": "손이 크다", "romanization": "soni keuda", "meaningKo": "씀씀이가 후하거나 음식을 많이 준비한다는 뜻", "meaningEn": "To be generous / prepare food in large quantities (lit. 'big hands')", "exampleKr": "엄마는 손이 커서 항상 음식을 많이 하셔.", "exampleEn": "My mom is so generous, she always makes tons of food.", "category": "idiom", "id": 45}, {"kr": "귀가 얇다", "romanization": "gwiga yalda", "meaningKo": "남의 말을 쉽게 믿고 잘 흔들린다는 뜻", "meaningEn": "To be easily swayed / gullible (lit. 'thin ears')", "exampleKr": "걔는 귀가 얇아서 광고만 보면 다 사고 싶어해.", "exampleEn": "He's so easily swayed, he wants to buy everything he sees advertised.", "category": "idiom", "id": 46}, {"kr": "바람맞다", "romanization": "baram matda", "meaningKo": "약속한 상대가 나오지 않아서 헛되이 기다리다", "meaningEn": "To be stood up (lit. 'to be hit by wind')", "exampleKr": "3시간 기다렸는데 바람맞았어.", "exampleEn": "I waited 3 hours and got stood up.", "category": "idiom", "id": 47}, {"kr": "깜빡하다", "romanization": "kkambakhada", "meaningKo": "잠깐 잊어버리다", "meaningEn": "To momentarily forget / space out", "exampleKr": "약속 있는 거 완전 깜빡했어.", "exampleEn": "I totally forgot I had an appointment.", "category": "idiom", "id": 48}, {"kr": "삽질하다", "romanization": "sapjilhada", "meaningKo": "쓸데없이 헛수고를 하다(원래 '삽질'은 삽으로 파는 일)", "meaningEn": "To waste time/effort doing something unproductive (lit. 'to shovel')", "exampleKr": "하루 종일 삽질만 하다가 결국 처음부터 다시 했어.", "exampleEn": "I wasted the whole day and ended up starting over from scratch.", "category": "idiom", "id": 49}, {"kr": "뒷북치다", "romanization": "dwitbukchida", "meaningKo": "이미 지난 일에 뒤늦게 반응하다", "meaningEn": "To react to something after it's already over / be behind the times (lit. 'to beat the drum after the fact')", "exampleKr": "그 얘기 다들 아는데 이제 와서 뒷북치지 마.", "exampleEn": "Everyone already knows that, don't bring it up late.", "category": "idiom", "id": 50}, {"kr": "오지랖 넓다", "romanization": "ojirap neopda", "meaningKo": "남의 일에 지나치게 참견한다는 뜻", "meaningEn": "To be overly nosy / meddle in others' business", "exampleKr": "오지랖 넓게 남의 연애사에 참견하지 마.", "exampleEn": "Don't be so nosy about other people's love lives.", "category": "idiom", "id": 51}, {"kr": "답답하다", "romanization": "dapdaphada", "meaningKo": "속이 갑갑하거나 상황이 잘 안 풀려서 갑갑한 느낌", "meaningEn": "To feel frustrated/stuffy (situation-wise or emotionally)", "exampleKr": "말이 안 통해서 진짜 답답해.", "exampleEn": "It's so frustrating that we can't communicate.", "category": "idiom", "id": 52}, {"kr": "쿨하다", "romanization": "kulhada", "meaningKo": "감정에 연연하지 않고 시원시원하게 행동한다는 뜻", "meaningEn": "To be 'cool' about something - not clingy or overly emotional about it", "exampleKr": "헤어졌는데도 쿨하게 잘 지내더라.", "exampleEn": "Even after breaking up, they were being really cool about it.", "category": "idiom", "id": 53}, {"kr": "깐깐하다", "romanization": "kkankkanhada", "meaningKo": "일 처리나 기준이 엄격하고 까다롭다는 뜻", "meaningEn": "To be strict/particular/meticulous", "exampleKr": "이 회사 검수가 진짜 깐깐해.", "exampleEn": "This company's quality check is really strict.", "category": "idiom", "id": 54}, {"kr": "드립치다", "romanization": "deurip chida", "meaningKo": "농담이나 재치있는 말을 던지다(드립=ad-lib)", "meaningEn": "To crack a joke / make a witty ad-libbed comment", "exampleKr": "회의 중에 갑자기 드립쳐서 다들 웃었어.", "exampleEn": "They suddenly cracked a joke in the meeting and everyone laughed.", "category": "idiom", "id": 55}, {"kr": "텐션 높다", "romanization": "tension nopda", "meaningKo": "활기차고 신난 상태를 뜻함(영어 tension에서 왔지만 뜻이 다름)", "meaningEn": "To be in high energy/excited mode (borrowed from English 'tension' but means something different)", "exampleKr": "오늘 완전 텐션 높아서 계속 웃었어.", "exampleEn": "I was in such high energy today, I kept laughing.", "category": "idiom", "id": 56}, {"kr": "현타 오다", "romanization": "hyeonta oda", "meaningKo": "'현실 자각 타임'의 줄임말, 갑자기 현실을 깨닫고 허탈해지는 순간", "meaningEn": "'Reality-check moment' - suddenly realizing the harsh reality and feeling deflated", "exampleKr": "밤새 게임하고 아침에 일어나니까 현타 왔어.", "exampleEn": "I gamed all night and had a reality check moment when I woke up.", "category": "idiom", "id": 57}, {"kr": "멘붕", "romanization": "menbung", "meaningKo": "'멘탈 붕괴'의 줄임말, 정신적으로 큰 충격을 받아 혼란스러운 상태", "meaningEn": "'Mental breakdown' (short form) - being mentally shocked/overwhelmed", "exampleKr": "시험 문제 다 어려워서 완전 멘붕이었어.", "exampleEn": "The exam questions were all so hard, I had a total mental breakdown.", "category": "idiom", "id": 58}, {"kr": "~하는 척하다", "romanization": "~haneun cheokhada", "meaningKo": "실제로는 아니면서 그런 것처럼 행동하다", "meaningEn": "To pretend to do something", "exampleKr": "안 아픈데 아픈 척했어.", "exampleEn": "I wasn't sick but I pretended to be.", "category": "idiom", "id": 59}, {"kr": "입에 착 붙다", "romanization": "ibe chak butda", "meaningKo": "말이나 노래 가사가 자연스럽고 기억하기 쉽다는 뜻", "meaningEn": "To be catchy / easy to remember (lit. 'sticks to the mouth')", "exampleKr": "이 노래 가사가 입에 착 붙어서 계속 흥얼거리게 돼.", "exampleEn": "This song's lyrics are so catchy I keep humming it.", "category": "idiom", "id": 60}];
+
+function safeGet(key, def) {
+  try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : def; }
+  catch (e) { return def; }
+}
+function safeSet(key, val) {
+  try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) {}
+}
+
+let known = safeGet("known", []); // 알아요 표시한 표현들의 kr 텍스트 배열
+let currentCategory = "all";
+let deck = [];
+let currentIndex = 0;
+let isFlipped = false;
+
+function getFilteredDeck() {
+  return currentCategory === "all"
+    ? EXPRESSIONS.slice()
+    : EXPRESSIONS.filter((e) => e.category === currentCategory);
+}
+
+function shuffleArray(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function renderCard() {
+  const item = deck[currentIndex];
+  if (!item) return;
+
+  document.getElementById("kr-word").textContent = item.kr;
+  document.getElementById("romanization").textContent = item.romanization;
+  document.getElementById("meaning-ko").textContent = item.meaningKo;
+  document.getElementById("meaning-en").textContent = item.meaningEn;
+  document.getElementById("example-kr").textContent = item.exampleKr;
+  document.getElementById("example-en").textContent = item.exampleEn;
+
+  const catLabel = { slang: "신조어", reaction: "리액션", abbr: "줄임말", idiom: "관용구" }[item.category] || item.category;
+  document.getElementById("cat-tab-front").textContent = catLabel;
+  document.getElementById("cat-tab-front").className = "cat-tab " + item.category;
+  document.getElementById("cat-tab-back").textContent = catLabel;
+  document.getElementById("cat-tab-back").className = "cat-tab " + item.category;
+
+  document.getElementById("deck-counter").textContent = `${currentIndex + 1} / ${deck.length}`;
+
+  const isKnown = known.includes(item.kr);
+  document.getElementById("know-btn").style.opacity = isKnown ? "1" : "0.55";
+
+  updateProgressNote();
+}
+
+function flipCard(forceState) {
+  isFlipped = forceState !== undefined ? forceState : !isFlipped;
+  document.getElementById("flashcard").classList.toggle("flipped", isFlipped);
+}
+
+function goTo(index) {
+  if (deck.length === 0) return;
+  stopAllAudio(); // 카드를 넘길 때 재생 중이던 발음이 있으면 멈춤 (다음 카드에서 겹쳐 들리지 않도록)
+  currentIndex = ((index % deck.length) + deck.length) % deck.length;
+  flipCard(false);
+  renderCard();
+}
+
+function markKnown(isKnown) {
+  const item = deck[currentIndex];
+  if (!item) return;
+  const idx = known.indexOf(item.kr);
+  if (isKnown && idx === -1) known.push(item.kr);
+  if (!isKnown && idx !== -1) known.splice(idx, 1);
+  safeSet("known", known);
+  renderCard();
+  setTimeout(() => goTo(currentIndex + 1), 250);
+}
+
+function updateProgressNote() {
+  const total = EXPRESSIONS.length;
+  const knownCount = known.length;
+  document.getElementById("progress-note").textContent =
+    `지금까지 ${knownCount} / ${total}개 외웠어요. 매일 조금씩 늘려봐요!`;
+}
+
+function setCategory(cat) {
+  currentCategory = cat;
+  document.querySelectorAll(".tab-btn").forEach((b) => b.classList.toggle("active", b.dataset.cat === cat));
+  deck = shuffleArray(getFilteredDeck());
+  goTo(0);
+}
+
+document.getElementById("flashcard").addEventListener("click", () => flipCard());
+document.getElementById("prev-btn").addEventListener("click", () => goTo(currentIndex - 1));
+document.getElementById("next-btn").addEventListener("click", () => goTo(currentIndex + 1));
+document.getElementById("shuffle-btn").addEventListener("click", () => {
+  deck = shuffleArray(deck);
+  goTo(0);
+});
+document.getElementById("know-btn").addEventListener("click", (e) => { e.stopPropagation(); markKnown(true); });
+document.getElementById("learning-btn").addEventListener("click", (e) => { e.stopPropagation(); markKnown(false); });
+document.querySelectorAll(".tab-btn").forEach((btn) => {
+  btn.addEventListener("click", () => setCategory(btn.dataset.cat));
+});
+
+// ===== 발음 듣기 =====
+// 1순위: /audio/{번호}.mp3 파일이 있으면 그걸 재생 (타입캐스트/클로바 더빙으로 만든 진짜 목소리)
+// 2순위: 그 파일이 없거나 재생 실패하면, 브라우저 내장 음성(Web Speech API)으로 자동 대체
+// → 60개를 한 번에 다 안 만들어도, 있는 것만 먼저 좋은 목소리로 들리고 나머지는 자동으로 대체됨
+let currentAudioObj = null; // 지금 재생 중인 mp3 Audio 객체 (연달아 눌러도 안 겹치게 관리)
+
+function stopAllAudio() {
+  if (currentAudioObj) {
+    currentAudioObj.pause();
+    currentAudioObj = null;
+  }
+  if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+  document.querySelectorAll(".speak-btn.speaking").forEach((b) => b.classList.remove("speaking"));
+}
+
+function speakBrowserTTS(text, btnEl) {
+  if (!("speechSynthesis" in window)) {
+    alert("이 브라우저는 발음 재생을 지원하지 않아요. 최신 크롬/사파리에서 시도해보세요.");
+    return;
+  }
+  stopAllAudio();
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.lang = "ko-KR";
+  utter.rate = 0.85;
+  if (btnEl) {
+    btnEl.classList.add("speaking");
+    utter.onend = () => btnEl.classList.remove("speaking");
+    utter.onerror = () => btnEl.classList.remove("speaking");
+  }
+  window.speechSynthesis.speak(utter);
+}
+
+function speakKorean(text, btnEl, audioId) {
+  stopAllAudio(); // 이전에 재생 중이던 소리가 있으면 먼저 멈추고 시작 (겹쳐 들리지 않도록)
+  if (!audioId) {
+    speakBrowserTTS(text, btnEl);
+    return;
+  }
+  const audio = new Audio(`audio/${String(audioId).padStart(2, "0")}.mp3`);
+  currentAudioObj = audio;
+  if (btnEl) btnEl.classList.add("speaking");
+  audio.addEventListener("ended", () => { if (btnEl) btnEl.classList.remove("speaking"); currentAudioObj = null; });
+  audio.addEventListener("error", () => {
+    // mp3 파일이 아직 없으면 여기로 옴 - 조용히 브라우저 음성으로 대체
+    if (btnEl) btnEl.classList.remove("speaking");
+    currentAudioObj = null;
+    speakBrowserTTS(text, btnEl);
+  });
+  audio.play().catch(() => { currentAudioObj = null; speakBrowserTTS(text, btnEl); });
+}
+
+document.getElementById("speak-word-btn").addEventListener("click", (e) => {
+  e.stopPropagation(); // 카드가 같이 뒤집히지 않도록
+  const item = deck[currentIndex];
+  if (item) speakKorean(item.kr, e.currentTarget, item.id);
+});
+document.getElementById("speak-example-btn").addEventListener("click", (e) => {
+  e.stopPropagation();
+  const item = deck[currentIndex];
+  if (item) speakKorean(item.exampleKr, e.currentTarget, null); // 예문은 지금은 브라우저 음성만 (mp3는 단어만 준비)
+});
+
+setCategory("all");
+</script>
+</body>
+</html>
